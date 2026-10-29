@@ -2,9 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0f0f12">
-<title>Rastreador · Vinculación en vivo</title>
+<!-- Esto hace que el celular la reconozca como una App para instalarla -->
+<link rel="manifest" href='data:application/manifest+json,{"name":"Rastreador Web","short_name":"Rastreador","start_url":".","display":"standalone","background_color":"#0f0f12","theme_color":"#0f0f12","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/854/854878.png","sizes":"512x512","type":"image/png"}]}'>
+<title>Rastreador Web</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 *{box-sizing:border-box}
@@ -18,7 +20,7 @@ input{font:inherit;color:inherit}
 .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;max-width:520px;width:100%}
 .card h1{margin:0 0 6px;font-size:1.45rem}
 .muted{color:var(--muted)}.small{font-size:.85rem}
-.btn{display:flex;flex-direction:column;gap:2px;width:100%;padding:16px;margin-top:12px;border-radius:12px;text-align:left;background:#24242c;color:var(--text)}
+.btn{display:flex;flex-direction:column;gap:2px;width:100%;padding:16px;margin-top:12px;border-radius:12px;text-align:left;background:#24242c;color:var(--text);transition:background .2s}
 .btn:hover{background:#2c2c36}
 .btn strong{font-size:1rem}
 .btn span{font-size:.85rem;color:var(--muted);font-weight:400}
@@ -26,12 +28,10 @@ input{font:inherit;color:inherit}
 .btn.primary span{color:rgba(255,255,255,.85)}
 .btn.ghost{background:#24242c}
 .btn.small-btn{padding:10px 16px;width:auto;flex-direction:row;align-items:center;gap:6px;margin:0}
-.btn:disabled{opacity:.5;cursor:not-allowed}
 #phone{min-height:100vh;padding:16px;display:flex;align-items:flex-start;justify-content:center}
 .phone-wrap{width:100%;max-width:480px}
 .topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .back{background:transparent;color:var(--text);font-size:1.4rem;padding:4px 10px;border-radius:8px}
-.back:hover{background:#24242c}
 .topbar h2{margin:0;font-size:1.1rem}
 .code-box{background:#121217;border:1px dashed #3a3a45;border-radius:10px;padding:14px;font-family:ui-monospace,monospace;font-size:.82rem;word-break:break-all;color:var(--link);line-height:1.5;margin-top:8px}
 .status{margin:14px 0;padding:12px;border-radius:10px;background:#121217;border:1px solid var(--border);font-size:.9rem}
@@ -49,12 +49,12 @@ input{font:inherit;color:inherit}
 #m-conn.ok{color:var(--ok)}
 .monitor-body{flex:1;display:grid;grid-template-columns:1fr 320px;overflow:hidden}
 #map{width:100%;height:100%;background:#1a1a1f}
+#map .leaflet-tile-container { filter: invert(90%) hue-rotate(180deg) brightness(85%) contrast(110%); }
 .monitor-body aside{background:var(--card);border-left:1px solid var(--border);padding:18px;overflow-y:auto;font-size:.9rem}
 .monitor-body aside h3{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 6px}
 .monitor-body aside h3:first-child{margin-top:0}
 .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);gap:12px}
 .row b{font-family:ui-monospace,monospace;font-weight:500}
-.row b.stale{color:var(--err)}
 .chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.9rem;cursor:pointer}
 #m-gmaps{display:block;text-align:center;padding:10px;margin-top:12px;border-radius:8px;background:#24242c;color:var(--text);text-decoration:none;font-size:.9rem}
 @media (max-width:780px){.monitor-body{grid-template-columns:1fr;grid-template-rows:1fr auto}#map{min-height:50vh}.monitor-body aside{max-height:45vh;border-left:0;border-top:1px solid var(--border)}}
@@ -63,37 +63,30 @@ input{font:inherit;color:inherit}
 <body>
 
 <div id="boot-error"></div>
-
-<noscript style="display:block;padding:20px;background:#3a0000;color:#fff">
-  Necesitas JavaScript activado para usar esta app.
-</noscript>
+<noscript style="display:block;padding:20px;background:#3a0000;color:#fff">Necesitas JavaScript activado.</noscript>
 
 <section id="picker">
   <div class="card">
-    <h1>📡 Rastreador personal</h1>
-    <p class="muted small" style="margin:0 0 8px">Rastrea <b>tu propio</b> celular desde <b>tu</b> laptop, en tiempo real.</p>
-    <button class="btn primary" data-role="phone"><strong>📱 Soy el celular</strong><span>Compartir mi ubicación</span></button>
-    <button class="btn secondary" data-role="monitor"><strong>💻 Soy el monitor</strong><span>Ver la ubicación del celular</span></button>
-    <p class="muted small" style="margin-top:18px" id="diag"></p>
+    <h1>📡 Rastreador Web</h1>
+    <p class="muted small" style="margin:0 0 8px">Instala esta web en tu celular y rastréalo desde tu laptop.</p>
+    <button class="btn primary" data-role="phone"><strong>📱 Soy el Celular</strong><span>Compartir mi ubicación</span></button>
+    <button class="btn secondary" data-role="monitor"><strong>💻 Soy la Laptop</strong><span>Ver la ubicación</span></button>
   </div>
 </section>
 
 <section id="phone" class="hidden">
   <div class="phone-wrap"><div class="card">
     <div class="topbar"><button class="back" data-back>←</button><h2>📱 Celular</h2></div>
-    <p class="muted small" style="margin:0">Código de vinculación — pégalo en la laptop:</p>
+    <p class="muted small" style="margin:0">Pasa este código a tu laptop:</p>
     <div class="code-box" id="phone-code">—</div>
-    <button class="btn ghost" id="copy-code" style="margin-top:8px">📋 Copiar código</button>
     <div id="phone-status" class="status">Detenido</div>
-    <button class="btn primary" id="start-share">▶ Empezar a compartir</button>
-    <button class="btn ghost hidden" id="stop-share">⏹ Detener</button>
+    <button class="btn primary" id="start-share">▶ Iniciar Rastreo</button>
+    <button class="btn ghost hidden" id="stop-share">⏹ Detener (Pide Clave)</button>
     <div class="info-grid">
       <div><span>Precisión</span><b id="p-acc">—</b></div>
       <div><span>Envíos</span><b id="p-sent">0</b></div>
-      <div><span>Batería</span><b id="p-bat">—</b></div>
-      <div><span>Último</span><b id="p-last">—</b></div>
     </div>
-    <div id="warn-https" class="warn hidden">⚠️ Esta página no está en HTTPS. El GPS no funcionará.</div>
+    <div class="warn" id="warn-https hidden">⚠️ Esta página no está en HTTPS. El GPS no funcionará.</div>
   </div></div>
 </section>
 
@@ -107,43 +100,23 @@ input{font:inherit;color:inherit}
   <div class="monitor-body">
     <div id="map"></div>
     <aside>
-      <h3>Última posición</h3>
+      <h3>Última Posición</h3>
       <div class="row"><span>Lat</span><b id="m-lat">—</b></div>
       <div class="row"><span>Lng</span><b id="m-lng">—</b></div>
       <div class="row"><span>Precisión</span><b id="m-acc">—</b></div>
-      <div class="row"><span>Velocidad</span><b id="m-spd">—</b></div>
       <div class="row"><span>Actualizado</span><b id="m-ago">—</b></div>
-      <div class="row"><span>Señal</span><b id="m-sig">—</b></div>
-      <div class="row"><span>Puntos</span><b id="m-pts">0</b></div>
       <a id="m-gmaps" target="_blank" rel="noopener">📍 Abrir en Google Maps</a>
       <label class="chk"><input type="checkbox" id="m-follow" checked> Seguir</label>
-      <label class="chk"><input type="checkbox" id="m-trail" checked> Rastro</label>
     </aside>
   </div>
 </section>
 
-<!-- Carga Leaflet de forma síncrona para asegurar que "L" exista antes del módulo -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 window.addEventListener('error', e => {
   const el = document.getElementById('boot-error');
-  el.textContent = '⚠️ Error: ' + (e.message || e) + '\n' + (e.filename || '');
+  el.textContent = '⚠️ Error: ' + (e.message || e);
   el.style.display = 'block';
-});
-window.addEventListener('unhandledrejection', e => {
-  const el = document.getElementById('boot-error');
-  el.textContent = '⚠️ Promesa rechazada: ' + (e.reason && (e.reason.message || e.reason));
-  el.style.display = 'block';
-});
-window.addEventListener('DOMContentLoaded', () => {
-  const proto = location.protocol;
-  const diag = document.getElementById('diag');
-  if (proto === 'file:') {
-    diag.innerHTML = '❌ <b>Estás abriendo el archivo con doble clic (file://).</b> Usa un servidor local o GitHub Pages.';
-    diag.style.color = '#ffb020';
-  } else {
-    diag.textContent = '✅ ' + proto + '//' + location.host + ' · listo';
-  }
 });
 </script>
 
@@ -152,21 +125,22 @@ const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const showErr = (msg) => { const e = $('#boot-error'); e.textContent = msg; e.style.display = 'block'; };
 
+const ADMIN_PASS = "admin123gutyu@";
+
 const firebaseConfig = {
-  apiKey:            "AIzaSyDyqHLM20NmklOtpB5bjMpyvGn_E0YCGRM",
-  authDomain:        "ubicacion-e3ec6.firebaseapp.com",
-  databaseURL:       "https://ubicacion-e3ec6-default-rtdb.firebaseio.com",
-  projectId:         "ubicacion-e3ec6",
-  storageBucket:     "ubicacion-e3ec6.firebasestorage.app",
+  apiKey: "AIzaSyDyqHLM20NmklOtpB5bjMpyvGn_E0YCGRM",
+  authDomain: "ubicacion-e3ec6.firebaseapp.com",
+  databaseURL: "https://ubicacion-e3ec6-default-rtdb.firebaseio.com",
+  projectId: "ubicacion-e3ec6",
+  storageBucket: "ubicacion-e3ec6.firebasestorage.app",
   messagingSenderId: "837106049471",
-  appId:             "1:837106049471:web:c91c09f704e10c85d4010a"
+  appId: "1:837106049471:web:c91c09f704e10c85d4010a"
 };
 
-let db = null;
-let activeRole = null;
-let phoneRoomCode, phoneWatch, phoneWakeLock, phoneSendCount=0, phoneLastSentAt=0, phoneLastPos=null;
-let monitorRoom, monitorUnsub, monitorTrailUnsub, monitorTickTimer, monitorLastTs=0, monitorTrailPts=[];
-let map, marker, trailLine;
+let db = null, activeRole = null;
+let phoneRoomCode, phoneWatch, phoneWakeLock, phoneSendCount=0;
+let monitorUnsub, monitorTickTimer, monitorLastTs=0;
+let map, marker;
 
 try {
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
@@ -175,25 +149,33 @@ try {
   db = dbf.getDatabase(app);
   window._dbf = dbf;
 } catch (e) {
-  showErr('❌ No se pudo cargar Firebase: ' + e.message);
-  throw e;
+  showErr('❌ Error en Firebase: ' + e.message); throw e;
 }
 
 const genCode = () => {
   const buf = new Uint8Array(20); crypto.getRandomValues(buf);
   return Array.from(buf, b => b.toString(36).padStart(2,'0')).join('').slice(0,28);
 };
-const distM = (a,b,c,d) => {
-  const R=6371000, r=x=>x*Math.PI/180, dLat=r(c-a), dLon=r(d-b);
-  const x=Math.sin(dLat/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dLon/2)**2;
-  return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
-};
 const showOnly = id => ["picker","phone","monitor"].forEach(x => $("#"+x).classList.toggle("hidden", x!==id));
 
 $$("[data-role]").forEach(b => b.addEventListener("click", () => switchRole(b.dataset.role)));
-$$("[data-back]").forEach(b => b.addEventListener("click", () => switchRole(null)));
+$$("[data-back]").forEach(b => b.addEventListener("click", () => {
+  if (activeRole === "phone" && phoneWatch !== null) {
+    const pass = prompt("🔒 Rastreo activo.\nIntroduce la contraseña para salir:");
+    if (pass !== ADMIN_PASS) { alert("Contraseña incorrecta."); return; }
+  }
+  switchRole(null);
+}));
+
+// Bloquea el cierre accidental
+window.addEventListener('beforeunload', (e) => {
+  if (activeRole === "phone" && phoneWatch !== null) {
+    e.preventDefault(); e.returnValue = '';
+  }
+});
+
 function switchRole(role){
-  if (activeRole==="phone") stopPhone();
+  if (activeRole==="phone") stopPhone(true);
   if (activeRole==="monitor") stopMonitor();
   activeRole = role;
   if (!role) { showOnly("picker"); return; }
@@ -205,148 +187,116 @@ function initPhone(){
   phoneRoomCode = localStorage.getItem("phoneRoom") || genCode();
   localStorage.setItem("phoneRoom", phoneRoomCode);
   $("#phone-code").textContent = phoneRoomCode;
-  if (location.protocol!=="https:" && location.hostname!=="localhost")
-    $("#warn-https").classList.remove("hidden");
   $("#phone-status").textContent="Detenido"; $("#phone-status").className="status";
   $("#start-share").classList.remove("hidden"); $("#stop-share").classList.add("hidden");
-  if ("getBattery" in navigator) navigator.getBattery().then(b=>{
-    const u=()=>$("#p-bat").textContent=Math.round(b.level*100)+"%"+(b.charging?" ⚡":"");
-    u(); b.addEventListener("levelchange",u); b.addEventListener("chargingchange",u);
-  }).catch(()=>{});
 }
-$("#copy-code").addEventListener("click", async ()=>{
-  try { await navigator.clipboard.writeText(phoneRoomCode); $("#copy-code").textContent="✅ Copiado"; }
-  catch { alert("Selecciona y copia a mano"); }
-});
+
 $("#start-share").addEventListener("click", startPhone);
-$("#stop-share").addEventListener("click", stopPhone);
+$("#stop-share").addEventListener("click", () => {
+  const pass = prompt("🔒 Introduce la contraseña para detener:");
+  if (pass === ADMIN_PASS) stopPhone();
+  else alert("Contraseña incorrecta. El rastreo continúa.");
+});
+
 async function startPhone(){
   if (!("geolocation" in navigator)){ alert("Sin GPS"); return; }
+  
+  // TRUCO MÁGICO: Evita que la pantalla se apague mientras la web está abierta
   try { if ("wakeLock" in navigator) phoneWakeLock = await navigator.wakeLock.request("screen"); } catch {}
-  phoneSendCount=0; phoneLastSentAt=0; phoneLastPos=null; $("#p-sent").textContent="0";
+
+  phoneSendCount=0; $("#p-sent").textContent="0";
   phoneWatch = navigator.geolocation.watchPosition(onPos, onErr, {enableHighAccuracy:true, maximumAge:0, timeout:30000});
+  
   $("#start-share").classList.add("hidden"); $("#stop-share").classList.remove("hidden");
-  $("#phone-status").textContent="Compartiendo ✅"; $("#phone-status").className="status ok";
+  $("#phone-status").textContent="Rastreando ✅ (Pantalla encendida)"; $("#phone-status").className="status ok";
 }
-function stopPhone(){
+
+function stopPhone(force = false){
+  if (!force && phoneWatch === null) return;
   if (phoneWatch!==null){ navigator.geolocation.clearWatch(phoneWatch); phoneWatch=null; }
   if (phoneWakeLock){ try{phoneWakeLock.release();}catch{} phoneWakeLock=null; }
   if (!$("#phone-status")) return;
   $("#phone-status").textContent="Detenido"; $("#phone-status").className="status";
   $("#start-share").classList.remove("hidden"); $("#stop-share").classList.add("hidden");
 }
+
 async function onPos(pos){
-  const now=Date.now(), c=pos.coords;
-  if (now - phoneLastSentAt < 5000) return;
-  if (phoneLastPos){
-    const d = distM(phoneLastPos.lat, phoneLastPos.lng, c.latitude, c.longitude);
-    if (d < 15 && now - phoneLastSentAt < 20000) return;
-  }
-  phoneLastPos={lat:c.latitude,lng:c.longitude}; phoneLastSentAt=now; phoneSendCount++;
-  $("#p-sent").textContent=phoneSendCount;
-  $("#p-acc").textContent=Math.round(c.accuracy)+" m";
-  $("#p-last").textContent=new Date().toLocaleTimeString();
+  const now = Date.now(), c = pos.coords;
+  phoneSendCount++;
+  $("#p-sent").textContent = phoneSendCount;
+  $("#p-acc").textContent = Math.round(c.accuracy) + " m";
+  
   const dbf = window._dbf;
   try {
     await dbf.set(dbf.ref(db, `rooms/${phoneRoomCode}/current`), {
-      lat:c.latitude, lng:c.longitude, accuracy:c.accuracy,
-      speed:c.speed??null, heading:c.heading??null, tsLocal:now, ts:dbf.serverTimestamp()
+      lat: c.latitude, lng: c.longitude, accuracy: c.accuracy, tsLocal: now
     });
-    await dbf.set(dbf.push(dbf.ref(db, `rooms/${phoneRoomCode}/trail`)), {lat:c.latitude,lng:c.longitude,ts:now});
-    $("#phone-status").textContent="Compartiendo ✅"; $("#phone-status").className="status ok";
-  } catch(e){
-    console.error(e);
-    $("#phone-status").textContent="⚠️ "+e.message; $("#phone-status").className="status error";
-  }
+  } catch(e) { console.error(e); }
 }
+
 function onErr(err){
-  console.error(err);
   $("#phone-status").textContent="⚠️ GPS: "+err.message; $("#phone-status").className="status error";
-  if (phoneWatch!==null){ navigator.geolocation.clearWatch(phoneWatch); phoneWatch=null; }
-  setTimeout(()=>{ if (activeRole==="phone") startPhone(); }, 3000);
 }
 
 async function initMonitor(){
   $("#m-code").value = localStorage.getItem("monitorRoom") || "";
   if (!map){
     map = L.map("map").setView([-12.05,-77.05], 13);
-    // Cambio clave: cartodb en lugar de osm para evitar bloqueos 403
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap &copy; CartoDB'
-    }).addTo(map);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19}).addTo(map);
   }
   setTimeout(()=>map && map.invalidateSize(), 150);
   if ($("#m-code").value.length >= 20) connectMonitor();
 }
+
 $("#m-connect").addEventListener("click", connectMonitor);
-$("#m-code").addEventListener("keydown", e => { if (e.key==="Enter") connectMonitor(); });
+
 function connectMonitor(){
   const code = $("#m-code").value.trim();
   if (code.length < 20){ alert("Código inválido"); return; }
   localStorage.setItem("monitorRoom", code);
-  stopMonitor(); monitorRoom = code;
-  $("#m-conn").textContent = "Conectando…"; $("#m-conn").className = "";
+  stopMonitor();
+  
+  $("#m-conn").textContent = "Conectando…";
   const dbf = window._dbf;
+  
   monitorUnsub = dbf.onValue(dbf.ref(db, `rooms/${code}/current`), snap => {
     const d = snap.val(); if (!d) return;
     updateMonitor(d);
     $("#m-conn").textContent = "🟢 En vivo"; $("#m-conn").className = "ok";
-  }, err => {
-    $("#m-conn").textContent = "❌ " + err.message; $("#m-conn").className = "";
   });
-  monitorTrailUnsub = dbf.onValue(dbf.query(dbf.ref(db, `rooms/${code}/trail`), dbf.limitToLast(500)), snap => {
-    const val = snap.val() || {};
-    monitorTrailPts = Object.values(val).filter(p=>p&&p.lat!=null).sort((a,b)=>(a.ts||0)-(b.ts||0));
-    $("#m-pts").textContent = monitorTrailPts.length;
-    redrawTrail();
-  });
+  
   clearInterval(monitorTickTimer);
-  monitorTickTimer = setInterval(tickMonitor, 1000);
+  monitorTickTimer = setInterval(() => {
+    if (!monitorLastTs) return;
+    const s = Math.round((Date.now()-monitorLastTs)/1000);
+    $("#m-ago").textContent = s<60 ? `hace ${s}s` : `hace ${Math.floor(s/60)} min`;
+  }, 1000);
 }
+
 function stopMonitor(){
   if (monitorUnsub) monitorUnsub();
-  if (monitorTrailUnsub) monitorTrailUnsub();
   clearInterval(monitorTickTimer);
-  monitorUnsub=monitorTrailUnsub=monitorTickTimer=null;
-  monitorRoom=null; monitorTrailPts=[];
-  if (map){ if (marker){map.removeLayer(marker);marker=null;} if (trailLine){map.removeLayer(trailLine);trailLine=null;} }
+  if (map && marker) { map.removeLayer(marker); marker = null; }
 }
+
 const markerIcon = L.divIcon({
   html:'<div style="width:18px;height:18px;background:#bc1888;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(188,24,136,.4)"></div>',
-  iconSize:[18,18], className:""
+  iconSize:[18,18]
 });
+
 function updateMonitor(d){
   const ll = [d.lat, d.lng];
   monitorLastTs = d.tsLocal || Date.now();
   if (!marker) marker = L.marker(ll, {icon:markerIcon}).addTo(map);
   else marker.setLatLng(ll);
-  marker.bindPopup(`<b>Celular</b><br>${new Date(monitorLastTs).toLocaleTimeString()}<br>±${Math.round(d.accuracy||0)} m`);
+  
   $("#m-lat").textContent = d.lat.toFixed(6);
   $("#m-lng").textContent = d.lng.toFixed(6);
   $("#m-acc").textContent = Math.round(d.accuracy||0)+" m";
-  $("#m-spd").textContent = d.speed!=null ? (d.speed*3.6).toFixed(1)+" km/h" : "—";
   $("#m-gmaps").href = `https://www.google.com/maps?q=${d.lat},${d.lng}`;
+  
   if ($("#m-follow").checked) map.panTo(ll, {animate:true});
-  tickMonitor();
 }
-function tickMonitor(){
-  if (!monitorLastTs) return;
-  const s = Math.round((Date.now()-monitorLastTs)/1000);
-  const el = $("#m-ago");
-  el.textContent = s<60 ? `hace ${s}s` : `hace ${Math.floor(s/60)} min`;
-  el.classList.toggle("stale", s>60);
-  $("#m-sig").textContent = s>120 ? "⚠️ sin señal" : "🟢 recibiendo";
-}
-function redrawTrail(){
-  if (!map) return;
-  if (trailLine) map.removeLayer(trailLine);
-  trailLine = null;
-  if (monitorTrailPts.length>1 && $("#m-trail").checked){
-    trailLine = L.polyline(monitorTrailPts.map(p=>[p.lat,p.lng]), {color:"#bc1888",weight:3,opacity:.7}).addTo(map);
-  }
-}
-$("#m-trail").addEventListener("change", redrawTrail);
 </script>
 </body>
 </html>
