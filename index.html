@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0f0f12">
-<!-- Esto hace que el celular la reconozca como una App para instalarla -->
-<link rel="manifest" href='data:application/manifest+json,{"name":"Rastreador Web","short_name":"Rastreador","start_url":".","display":"standalone","background_color":"#0f0f12","theme_color":"#0f0f12","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/854/854878.png","sizes":"512x512","type":"image/png"}]}'>
-<title>Rastreador Web</title>
+<title>Rastreador Personal</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 *{box-sizing:border-box}
@@ -63,7 +61,6 @@ input{font:inherit;color:inherit}
 <body>
 
 <div id="boot-error"></div>
-<noscript style="display:block;padding:20px;background:#3a0000;color:#fff">Necesitas JavaScript activado.</noscript>
 
 <section id="picker">
   <div class="card">
@@ -86,7 +83,6 @@ input{font:inherit;color:inherit}
       <div><span>Precisión</span><b id="p-acc">—</b></div>
       <div><span>Envíos</span><b id="p-sent">0</b></div>
     </div>
-    <div class="warn" id="warn-https hidden">⚠️ Esta página no está en HTTPS. El GPS no funcionará.</div>
   </div></div>
 </section>
 
@@ -125,8 +121,10 @@ const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const showErr = (msg) => { const e = $('#boot-error'); e.textContent = msg; e.style.display = 'block'; };
 
+// 🔐 CONTRASEÑA MAESTRA PARA DETENER EL RASTREO
 const ADMIN_PASS = "admin123gutyu@";
 
+// 🔥 TU CONFIGURACIÓN DE FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyDyqHLM20NmklOtpB5bjMpyvGn_E0YCGRM",
   authDomain: "ubicacion-e3ec6.firebaseapp.com",
@@ -156,6 +154,7 @@ const genCode = () => {
   const buf = new Uint8Array(20); crypto.getRandomValues(buf);
   return Array.from(buf, b => b.toString(36).padStart(2,'0')).join('').slice(0,28);
 };
+
 const showOnly = id => ["picker","phone","monitor"].forEach(x => $("#"+x).classList.toggle("hidden", x!==id));
 
 $$("[data-role]").forEach(b => b.addEventListener("click", () => switchRole(b.dataset.role)));
@@ -167,7 +166,7 @@ $$("[data-back]").forEach(b => b.addEventListener("click", () => {
   switchRole(null);
 }));
 
-// Bloquea el cierre accidental
+// Bloquea el cierre accidental de la pestaña
 window.addEventListener('beforeunload', (e) => {
   if (activeRole === "phone" && phoneWatch !== null) {
     e.preventDefault(); e.returnValue = '';
@@ -183,6 +182,7 @@ function switchRole(role){
   role==="phone" ? initPhone() : initMonitor();
 }
 
+// ================== LÓGICA DEL CELULAR ==================
 function initPhone(){
   phoneRoomCode = localStorage.getItem("phoneRoom") || genCode();
   localStorage.setItem("phoneRoom", phoneRoomCode);
@@ -192,6 +192,7 @@ function initPhone(){
 }
 
 $("#start-share").addEventListener("click", startPhone);
+
 $("#stop-share").addEventListener("click", () => {
   const pass = prompt("🔒 Introduce la contraseña para detener:");
   if (pass === ADMIN_PASS) stopPhone();
@@ -201,7 +202,7 @@ $("#stop-share").addEventListener("click", () => {
 async function startPhone(){
   if (!("geolocation" in navigator)){ alert("Sin GPS"); return; }
   
-  // TRUCO MÁGICO: Evita que la pantalla se apague mientras la web está abierta
+  // Mantiene la pantalla encendida
   try { if ("wakeLock" in navigator) phoneWakeLock = await navigator.wakeLock.request("screen"); } catch {}
 
   phoneSendCount=0; $("#p-sent").textContent="0";
@@ -238,6 +239,7 @@ function onErr(err){
   $("#phone-status").textContent="⚠️ GPS: "+err.message; $("#phone-status").className="status error";
 }
 
+// ================== LÓGICA DE LA LAPTOP ==================
 async function initMonitor(){
   $("#m-code").value = localStorage.getItem("monitorRoom") || "";
   if (!map){
